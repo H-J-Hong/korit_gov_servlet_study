@@ -68,8 +68,27 @@ public class UserDao {
     }
 
     public List<User> findUserByKeyword(String keyword) {
+        String sql = "select user_id,username,password,age,create_dt from user_tb where username like ?";
         List<User> foundUserList = new ArrayList<>();
-        return foundUserList;
+
+        try (
+                Connection con = ConnectionFactory.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)
+                ){
+            ps.setString(1, "%" + keyword + "%");
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    foundUserList.add(toUser(rs));
+                }
+            }
+            return foundUserList;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+//        return foundUserList;
     }
 
     public List<User> findAllUserList() {
@@ -82,13 +101,7 @@ public class UserDao {
                 ) {
             try (ResultSet rs = ps.executeQuery()) {
                 while(rs.next()) {
-                    User user = User.builder()
-                            .userId(rs.getInt("user_id"))
-                            .username(rs.getString("username"))
-                            .age(rs.getInt("age"))
-                            .createDt(rs.getTimestamp("create_dt").toLocalDateTime())
-                            .build();
-                    foundUserList.add(user);
+                    foundUserList.add(toUser(rs));
                     foundUserList.forEach(System.out::println);
                     System.out.println();
                 }
@@ -107,6 +120,7 @@ public class UserDao {
                 .username(rs.getString("username"))
                 .password(rs.getString("password"))
                 .age(rs.getInt("age"))
+                .createDt(rs.getTimestamp("create_dt").toLocalDateTime())
                 .build();
     }
 }

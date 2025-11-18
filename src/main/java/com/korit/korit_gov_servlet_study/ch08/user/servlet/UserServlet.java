@@ -1,6 +1,7 @@
 package com.korit.korit_gov_servlet_study.ch08.user.servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.korit.korit_gov_servlet_study.ch08.user.dto.ApiRespDto;
@@ -26,7 +27,7 @@ public class UserServlet extends HttpServlet {
     public void init(ServletConfig config) throws ServletException {
         userService = UserService.getInstance();
         objectMapper = new ObjectMapper();
-        objectMapper.registerModule();
+        objectMapper.registerModule(new JavaTimeModule());
     }
 
     @Override
@@ -39,28 +40,43 @@ public class UserServlet extends HttpServlet {
             if (user != null) {
                 apiRespDto = ApiRespDto.<User>builder()
                         .status("success")
-                        .message(username + " 으로 조회에 성공하였습니다.")
+                        .message("유저네임 : " +  username + " 의 조회에 성공하였습니다.")
                         .body(user)
                         .build();
             } else {
                 apiRespDto = ApiRespDto.<User>builder()
                         .status("failed")
-                        .message(username + " 으로 조회에 실패하였습니다.")
+                        .message("유저네임 : " + username + " 의 조회에 실패하였습니다.")
                         .body(user)
                         .build();
             }
         } else if(keyword !=null) {
+            List<User> userList = userService.getUserByKeyword(keyword);
+            if (!userList.isEmpty()) {
+                apiRespDto = ApiRespDto.<List<User>>builder()
+                        .status("success")
+                        .message("키워드 : " + keyword + " 의 조회에 성공하였습니다.")
+                        .body(userList)
+                        .build();
+            } else {
+                apiRespDto = ApiRespDto.<List<User>>builder()
+                        .status("failed")
+                        .message("키워드 : " + keyword + " 의 조회에 실패하였습니다.")
+                        .body(userList)
+                        .build();
+            }
 
         } else {
             List<User> userList = userService.getAllUserList();
             if (!userList.isEmpty()) {
-                apiRespDto = ApiRespDto.<User>builder()
+                apiRespDto = ApiRespDto.<List<User>>builder()
                         .status("success")
                         .message("전체 조회에 성공하였습니다.")
+                        .body(userList)
                         .build();
             }
         }
-        objectMapper.writeValue(resp.getWriter(),apiRespDto);
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(resp.getWriter(),apiRespDto);
     }
 
     @Override
@@ -84,6 +100,6 @@ public class UserServlet extends HttpServlet {
                     .body(user)
                     .build();
         }
-        objectMapper.writeValue(resp.getWriter(),apiRespDto);
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(resp.getWriter(),apiRespDto);
     }
 }
